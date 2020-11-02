@@ -8,9 +8,20 @@ var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+router.route('/')
+.get(authenticate.verifyUser, (req, res, next) => {
+  if (authenticate.verifyAdmin(req.user)) { 
+  User.find({})
+    .then((users) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(users);
+    }, (err) => next(err))
+    .catch((err) => next(err));
+  } else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}});
 
 router.post('/signup', function(req, res, next) {
   User.register(new User({username: req.body.username}), req.body.password, (err, user) => {
@@ -44,7 +55,6 @@ router.post('/signup', function(req, res, next) {
 });
 
 router.post('/login', passport.authenticate('local'), (req, res) => {
-
   var token = authenticate.getToken({_id: req.user._id});
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');

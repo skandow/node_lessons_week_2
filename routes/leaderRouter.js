@@ -20,6 +20,7 @@ leaderRouter.route('/')
     .catch((err) => next(err));
 })
 .post(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Leaders.create(req.body)
     .then((leader) => {
         console.log('leader Created', leader);
@@ -28,12 +29,17 @@ leaderRouter.route('/')
         res.json(leader);
     }, (err) => next(err))
         .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 })
 .put(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end('PUT opearation not supported on /leaders');
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Leaders.remove({})
     .then((leaders) => {
         res.statusCode = 200;
@@ -41,6 +47,10 @@ leaderRouter.route('/')
         res.json(leaders);
     }, (err) => next(err))
     .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 });
 
 leaderRouter.route('/:leaderId')
@@ -58,6 +68,7 @@ leaderRouter.route('/:leaderId')
     res.end('POST opearation not supported on /leaders/' + req.params.leaderId);
 })
 .put(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Leaders.findByIdAndUpdate(req.params.leaderId, {
         $set: req.body
     }, { new: true })
@@ -67,8 +78,13 @@ leaderRouter.route('/:leaderId')
         res.json(leader);
     }, (err) => next(err))
         .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Leaders.findByIdAndDelete(req.params.leaderId)
     .then((leader) => {
         res.statusCode = 200;
@@ -76,6 +92,10 @@ leaderRouter.route('/:leaderId')
         res.json(leader);
     }, (err) => next(err))
     .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 });
 
 module.exports = leaderRouter;

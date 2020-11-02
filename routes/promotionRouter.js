@@ -20,6 +20,7 @@ promotionRouter.route('/')
     .catch((err) => next(err));
 })
 .post(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(user.req)) {
     Promotions.create(req.body)
     .then((promotion) => {
         console.log('Promotion Created', promotion);
@@ -28,12 +29,17 @@ promotionRouter.route('/')
         res.json(promotion);
     }, (err) => next(err))
         .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 })
 .put(authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;
     res.end('PUT opearation not supported on /promotions');
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Promotions.remove({})
     .then((promotions) => {
         res.statusCode = 200;
@@ -41,6 +47,10 @@ promotionRouter.route('/')
         res.json(promotions);
     }, (err) => next(err))
     .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 });
 
 promotionRouter.route('/:promotionId')
@@ -58,6 +68,7 @@ promotionRouter.route('/:promotionId')
     res.end('POST opearation not supported on /promotions/' + req.params.promotionId);
 })
 .put(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Promotions.findByIdAndUpdate(req.params.promotionId, {
         $set: req.body
     }, { new: true })
@@ -67,8 +78,13 @@ promotionRouter.route('/:promotionId')
         res.json(promotion);
     }, (err) => next(err))
         .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 })
 .delete(authenticate.verifyUser, (req, res, next) => {
+    if (authenticate.verifyAdmin(req.user)) {
     Promotions.findByIdAndDelete(req.params.promotionId)
     .then((promotion) => {
         res.statusCode = 200;
@@ -76,6 +92,10 @@ promotionRouter.route('/:promotionId')
         res.json(promotion);
     }, (err) => next(err))
     .catch((err) => next(err));
+} else {
+    res.statusCode = 403;
+    res.end('You are not authorized to use this operation.')
+}
 });
 
 module.exports = promotionRouter;
