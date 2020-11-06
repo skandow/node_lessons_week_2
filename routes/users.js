@@ -2,14 +2,16 @@ var express = require('express');
 const bodyParser = require('body-parser');
 var User = require('../models/user');
 var passport = require('passport');
-var authenticate = require('../authenticate')
+var authenticate = require('../authenticate');
+const cors = require('./cors');
 
 var router = express.Router();
 router.use(bodyParser.json());
 
 /* GET users listing. */
 router.route('/')
-.get(authenticate.verifyUser, (req, res, next) => {
+.options(cors.corsWithOptions, (req, res) => { res.sendStatus(200)})
+.get(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
   if (authenticate.verifyAdmin(req.user)) { 
   User.find({})
     .then((users) => {
@@ -23,7 +25,7 @@ router.route('/')
     res.end('You are not authorized to use this operation.')
 }});
 
-router.post('/signup', function(req, res, next) {
+router.post('/signup', cors.corsWithOptions, function(req, res, next) {
   User.register(new User({username: req.body.username}), req.body.password, (err, user) => {
     if(err) {
       console.log(err)
@@ -54,7 +56,7 @@ router.post('/signup', function(req, res, next) {
   });
 });
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
+router.post('/login', cors.corsWithOptions, passport.authenticate('local'), (req, res) => {
   var token = authenticate.getToken({_id: req.user._id});
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json');
@@ -72,5 +74,14 @@ router.get('/logout', (req, res) => {
     next(err);
   }
 });
+
+router.get('/facebook/token', passport.authenticate('facebook-token'), (req, res) => {
+  if (req.user) {
+    var token = authenticate.getToken({_id: req.user._id});
+    rres.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json({success: true, token: token, status: 'You are successfully logged in!'})
+  }
+})
 
 module.exports = router;
